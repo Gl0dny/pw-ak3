@@ -3,108 +3,102 @@
 #include <assert.h>
 #include <stdbool.h>
 
-#define MAX_TITLE_LENGTH 256
+#define MAX_TITLE_LENGTH 512
 
+//#define MATRIX_SIZE 5
+#define MATRIX_SIZE 2
+#define MAX_ITERATIONS 10
 
-
-bool is_identity(int n, double matrix[n][n]);
-void matrix_print(int n, double matrix[n][n], const char *title);
-void matrix_print2(int n, double matrix[n][n], const char *format, ...);
-
-void matrix_multiply(int n, double A[n][n], double B[n][n], double C[n][n]);
-void matrix_subtract(int n, double A[n][n], double B[n][n], double C[n][n]);
-void matrix_inversion_iteration(int n, double A[n][n], double B[n][n], double B_next[n][n]);
-
-
-double A[5][5] = {
+/*
+double A[MATRIX_SIZE][MATRIX_SIZE] = {
     {0.25, 0.33, -0.75, 1, 1},
     {0, -1, 0, 0.75, 0.5},
     {0, 0, 0, -1, 0},
     {0, 0, 0, 0.75, -1},
     {0, -0.5, 0, 0.33, 0.25}
 };
+*/
 
-// Definicja macierzy jednostkowej I
-double I[5][5] = {
+double A[MATRIX_SIZE][MATRIX_SIZE] = {
+    {0.25, 0.33},
+    {0, -1}
+};
+
+/*
+double I[MATRIX_SIZE][MATRIX_SIZE] = {
     {1, 0, 0, 0, 0},
     {0, 1, 0, 0, 0},
     {0, 0, 1, 0, 0},
     {0, 0, 0, 1, 0},
     {0, 0, 0, 0, 1},
 };
+*/
 
-// Początkowa aproksymacja A^-1
-double B[5][5] = {
+double I[MATRIX_SIZE][MATRIX_SIZE] = {
+    {1, 0},
+    {0, 1},
+};
+
+/*
+double B[MATRIX_SIZE][MATRIX_SIZE] = {
     {1,0,0, 0, 0},
     {0,1,0, 0, 0},
     {0,0,1, 0, 0},
     {0,0,0, 1, 0},
     {0,0,0, 0, 1}
 };
+*/
+
+double B[MATRIX_SIZE][MATRIX_SIZE] = {
+    {1,0},
+    {0,1}
+};
 
 
-double result[5][5];
+bool is_identity(int n, double matrix[n][n]);
+void matrix_print(int n, double matrix[n][n], const char *format, ...);
+
+void matrix_copy(int n, double source[n][n], double destination[n][n]);
+void matrix_multiply(int n, double A[n][n], double B[n][n], double C[n][n]);
+void matrix_subtract(int n, double A[n][n], double B[n][n], double C[n][n]);
+void matrix_inversion_iteration(int n, double A[n][n], double B[n][n], double B_next[n][n]);
+
+
+double result[MATRIX_SIZE][MATRIX_SIZE];
 
 int main() {
-    /*
-    // Definicja macierzy A
-    double A[5][5] = {
-        {2, 3, -2, 1, 1},
-        {1, -1, 0, 2, 2},
-        {1, 0, 0, 1, 0},
-        {1, 0, 0, 2, 1},
-        {1, -0.5, 0, 2, -0.25}
-    };
-    // Definicja macierzy jednostkowej I
-    double I[5][5] = {
-        {1, 0, 0, 0, 0},
-        {0, 1, 0, 0, 0},
-        {0, 0, 1, 0, 0},
-        {0, 0, 0, 1, 0},
-        {0, 0, 0, 0, 1},
-    };
-
-    // Początkowa aproksymacja A^-1
-    double B[5][5] = {
-        {0.5, 0.25, 0, -0.25, -5},
-        {0, 0.25,0, 1, 2},
-        {1, -0.25,0, 1, 2},
-        {0, 0.25,0, 0, -0.25},
-        {1, 0,0, 1, -1}
-    };
-     */
-
-
-    matrix_print(5, A, "A");
-    matrix_print(5, I, "I");
+    matrix_print(MATRIX_SIZE, A, "A");
+    matrix_print(MATRIX_SIZE, I, "I");
 
     // Mnożenie A przez I
-    matrix_multiply(5, A, I, result);
-    matrix_print(5, result, "A * I");
+    matrix_multiply(MATRIX_SIZE, A, I, result);
+    matrix_print(MATRIX_SIZE, result, "A * I");
 
     // Przykład obliczania iteracji odwracania macierzy
-    matrix_print(5, B, "B");
-    double B_next[5][5];
+    matrix_print(MATRIX_SIZE, B, "B");
+    double B_next[MATRIX_SIZE][MATRIX_SIZE];
+    double B_temp[MATRIX_SIZE][MATRIX_SIZE];
 
-    for (int iter = 0; iter < 100; iter++) {
-        matrix_inversion_iteration(5, A, B, B_next);
-        matrix_print2(5, B_next, "iter:%d, Next iteration of B", iter);
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 5; j++) {
-                B[i][j] = B_next[i][j];
-            }
+    for (int iter = 0; iter < MAX_ITERATIONS; iter++) {
+        matrix_inversion_iteration(MATRIX_SIZE, A, B, B_next);
+        matrix_print(MATRIX_SIZE, B_next, "iter:%d, Next iteration of B", iter);
+        matrix_multiply(MATRIX_SIZE, B_next, A, B_temp);
+        if (is_identity(MATRIX_SIZE, B_temp)) {
+            printf("FOUND!\n");
+            break;
         }
+
+        matrix_copy(MATRIX_SIZE, B_next, B);
     }
 
-    matrix_print(5, B, "Final B");
-
-    matrix_multiply(5, B, A, result);
-    matrix_print(5,result, "The result is");
+    matrix_print(MATRIX_SIZE, B, "Final B");
+    matrix_multiply(MATRIX_SIZE, B, A, result);
+    matrix_print(MATRIX_SIZE,result, "The result is");
 
     return 0;
 }
 
-void matrix_print2(int n, double matrix[n][n], const char *format, ...) {
+void matrix_print(int n, double matrix[n][n], const char *format, ...) {
     assert(format != NULL);
     assert(matrix != NULL);
     assert(n > 0);
@@ -117,24 +111,6 @@ void matrix_print2(int n, double matrix[n][n], const char *format, ...) {
     va_end(args);
 
     printf("%s: [\n", title);
-
-    int rows = n;
-    int cols = n;
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            printf("%.2f\t", matrix[i][j]);
-        }
-        printf("\n");
-    }
-    printf("]\n");
-}
-
-void matrix_print(int n, double matrix[n][n], const char *title) {
-    assert(title != NULL);
-    printf("%s: [\n", title);
-
-    assert(matrix != NULL);
-    assert(n > 0);
 
     int rows = n;
     int cols = n;
@@ -164,6 +140,14 @@ void matrix_subtract(int n, double a[n][n], double b[n][n], double c[n][n]) {
     for(int i = 0; i < n; i++) {
         for(int j = 0; j < n; j++) {
             c[i][j] = a[i][j] - b[i][j];
+        }
+    }
+}
+
+void matrix_copy(int n, double source[n][n], double destination[n][n]) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            destination[i][j] = source[i][j];
         }
     }
 }
