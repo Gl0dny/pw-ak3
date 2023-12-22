@@ -7,51 +7,21 @@
 
 //#define MATRIX_SIZE 5
 #define MATRIX_SIZE 2
-#define MAX_ITERATIONS 10
-
-/*
-double A[MATRIX_SIZE][MATRIX_SIZE] = {
-    {0.25, 0.33, -0.75, 1, 1},
-    {0, -1, 0, 0.75, 0.5},
-    {0, 0, 0, -1, 0},
-    {0, 0, 0, 0.75, -1},
-    {0, -0.5, 0, 0.33, 0.25}
-};
-*/
+#define MAX_ITERATIONS 15
 
 double A[MATRIX_SIZE][MATRIX_SIZE] = {
-    {0.25, 0.33},
-    {0, -1}
+    {2, 3},
+    {1, 4}
 };
-
-/*
-double I[MATRIX_SIZE][MATRIX_SIZE] = {
-    {1, 0, 0, 0, 0},
-    {0, 1, 0, 0, 0},
-    {0, 0, 1, 0, 0},
-    {0, 0, 0, 1, 0},
-    {0, 0, 0, 0, 1},
-};
-*/
 
 double I[MATRIX_SIZE][MATRIX_SIZE] = {
     {1, 0},
     {0, 1},
 };
 
-/*
 double B[MATRIX_SIZE][MATRIX_SIZE] = {
-    {1,0,0, 0, 0},
-    {0,1,0, 0, 0},
-    {0,0,1, 0, 0},
-    {0,0,0, 1, 0},
-    {0,0,0, 0, 1}
-};
-*/
-
-double B[MATRIX_SIZE][MATRIX_SIZE] = {
-    {1,0},
-    {0,1}
+    {0.1,0.5},
+    {-0.1,-0.02}
 };
 
 
@@ -66,15 +36,14 @@ void matrix_inversion_iteration(int n, double A[n][n], double B[n][n], double B_
 
 double result[MATRIX_SIZE][MATRIX_SIZE];
 
-int main() {
+int main()
+{
     matrix_print(MATRIX_SIZE, A, "A");
     matrix_print(MATRIX_SIZE, I, "I");
 
-    // Mnożenie A przez I
     matrix_multiply(MATRIX_SIZE, A, I, result);
     matrix_print(MATRIX_SIZE, result, "A * I");
 
-    // Przykład obliczania iteracji odwracania macierzy
     matrix_print(MATRIX_SIZE, B, "B");
     double B_next[MATRIX_SIZE][MATRIX_SIZE];
     double B_temp[MATRIX_SIZE][MATRIX_SIZE];
@@ -83,6 +52,8 @@ int main() {
         matrix_inversion_iteration(MATRIX_SIZE, A, B, B_next);
         matrix_print(MATRIX_SIZE, B_next, "iter:%d, Next iteration of B", iter);
         matrix_multiply(MATRIX_SIZE, B_next, A, B_temp);
+
+        matrix_print(MATRIX_SIZE, B_temp, "mnoz");
         if (is_identity(MATRIX_SIZE, B_temp)) {
             printf("FOUND!\n");
             break;
@@ -98,7 +69,8 @@ int main() {
     return 0;
 }
 
-void matrix_print(int n, double matrix[n][n], const char *format, ...) {
+void matrix_print(int n, double matrix[n][n], const char *format, ...)
+{
     assert(format != NULL);
     assert(matrix != NULL);
     assert(n > 0);
@@ -123,7 +95,8 @@ void matrix_print(int n, double matrix[n][n], const char *format, ...) {
     printf("]\n");
 }
 
-void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n]) {
+void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
+{
     for(int i = 0; i < n; i++) {
         for(int j = 0; j < n; j++) {
             c[i][j] = 0;
@@ -135,7 +108,8 @@ void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n]) {
     }
 }
 
-void matrix_subtract(int n, double a[n][n], double b[n][n], double c[n][n]) {
+void matrix_subtract(int n, double a[n][n], double b[n][n], double c[n][n])
+{
     // Odejmuje macierz B od A, wynik w C
     for(int i = 0; i < n; i++) {
         for(int j = 0; j < n; j++) {
@@ -144,7 +118,8 @@ void matrix_subtract(int n, double a[n][n], double b[n][n], double c[n][n]) {
     }
 }
 
-void matrix_copy(int n, double source[n][n], double destination[n][n]) {
+void matrix_copy(int n, double source[n][n], double destination[n][n])
+{
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             destination[i][j] = source[i][j];
@@ -152,11 +127,10 @@ void matrix_copy(int n, double source[n][n], double destination[n][n]) {
     }
 }
 
-void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double b_next[n][n]) {
-    // Oblicza k-tą iterację odwracania macierzy
+void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double b_next[n][n])
+{
     double r[n][n], temp[n][n];
 
-    // r(B) = I - BA
     matrix_multiply(n, b, a, temp);
     for(int i = 0; i < n; i++) {
         for(int j = 0; j < n; j++) {
@@ -164,7 +138,6 @@ void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double b_
         }
     }
 
-    // B_{k+1} = (I + R(B_k))B_k
     matrix_multiply(n, r, b, temp);
     for(int i = 0; i < n; i++) {
         for(int j = 0; j < n; j++) {
@@ -173,7 +146,8 @@ void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double b_
     }
 }
 
-bool is_identity(int n, double matrix[n][n]) {
+bool is_identity(int n, double matrix[n][n])
+{
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             if ((i == j && matrix[i][j] != 1) || (i != j && matrix[i][j] != 0)) {
