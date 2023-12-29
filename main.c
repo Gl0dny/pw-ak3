@@ -41,6 +41,7 @@ double result[MATRIX_SIZE][MATRIX_SIZE];
 
 int main()
 {
+
     if (MATRIX_SIZE == 2 &&
             MATRIX_SIZE == 3 &&
             MATRIX_SIZE == 4 &&
