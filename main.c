@@ -1,28 +1,29 @@
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <math.h>
 
 #define MAX_TITLE_LENGTH 512
 
-//#define MATRIX_SIZE 5
 #define MATRIX_SIZE 2
-#define MAX_ITERATIONS 15
+#define MAX_ITERATIONS 25
 
-double A[MATRIX_SIZE][MATRIX_SIZE] = {
-    {2, 3},
-    {1, 4}
-};
+#if MATRIX_SIZE == 2
+#include "vars_2.h"
+#elif MATRIX_SIZE == 3
+#include "vars_3.h"
+#elif MATRIX_SIZE == 4
+#include "vars_4.h"
+#elif MATRIX_SIZE == 5
+#include "vars_5.h"
+#elif MATRIX_SIZE == 10
+#include "vars_10.h"
+#else
+#include "vars_2.h"
+#endif
 
-double I[MATRIX_SIZE][MATRIX_SIZE] = {
-    {1, 0},
-    {0, 1},
-};
-
-double B[MATRIX_SIZE][MATRIX_SIZE] = {
-    {0.1,0.5},
-    {-0.1,-0.02}
-};
 
 
 bool is_identity(int n, double matrix[n][n]);
@@ -33,11 +34,27 @@ void matrix_multiply(int n, double A[n][n], double B[n][n], double C[n][n]);
 void matrix_subtract(int n, double A[n][n], double B[n][n], double C[n][n]);
 void matrix_inversion_iteration(int n, double A[n][n], double B[n][n], double B_next[n][n]);
 
+double determinant(int n, double matrix[n][n]);
+
 
 double result[MATRIX_SIZE][MATRIX_SIZE];
 
 int main()
 {
+    if (MATRIX_SIZE == 2 &&
+            MATRIX_SIZE == 3 &&
+            MATRIX_SIZE == 4 &&
+            MATRIX_SIZE == 5) {
+        printf("Invalid MATRIX_SIZE");
+        exit(1);
+    }
+
+    printf("MATRIX_SIZE: %d\n", MATRIX_SIZE);
+    if (determinant(MATRIX_SIZE, A) == 0) {
+        printf("MACIERZ JEST OSOBLIWA.\n");
+        exit(0);
+    }
+
     matrix_print(MATRIX_SIZE, A, "A");
     matrix_print(MATRIX_SIZE, I, "I");
 
@@ -53,18 +70,21 @@ int main()
         matrix_print(MATRIX_SIZE, B_next, "iter:%d, Next iteration of B", iter);
         matrix_multiply(MATRIX_SIZE, B_next, A, B_temp);
 
-        matrix_print(MATRIX_SIZE, B_temp, "mnoz");
         if (is_identity(MATRIX_SIZE, B_temp)) {
             printf("FOUND!\n");
             break;
+        } else {
+            matrix_copy(MATRIX_SIZE, B_next, B);
         }
 
-        matrix_copy(MATRIX_SIZE, B_next, B);
+
     }
+
+
+
 
     matrix_print(MATRIX_SIZE, B, "Final B");
     matrix_multiply(MATRIX_SIZE, B, A, result);
-    matrix_print(MATRIX_SIZE,result, "The result is");
 
     return 0;
 }
@@ -156,4 +176,54 @@ bool is_identity(int n, double matrix[n][n])
         }
     }
     return true;
+}
+
+double determinant(int n, double matrix[n][n])
+{
+    int i, j, k;
+    double det = 1;
+    double ratio;
+
+    for (i = 0; i < n; i++) {
+        if (matrix[i][i] == 0.0) {
+            for (j = i + 1; j < n; j++) {
+                if (matrix[j][i] != 0.0) {
+                    for (k = 0; k < n; k++) {
+                        double temp = matrix[i][k];
+                        matrix[i][k] = matrix[j][k];
+                        matrix[j][k] = temp;
+                    }
+                    det *= -1;
+                    break;
+                }
+            }
+        }
+
+        if (matrix[i][i] == 0.0)
+            return 0;
+
+        for (j = i + 1; j < n; j++) {
+            ratio = matrix[j][i] / matrix[i][i];
+            for (k = i; k < n; k++)
+                matrix[j][k] -= ratio * matrix[i][k];
+        }
+    }
+
+    for (i = 0; i < n; i++) {
+        det *= matrix[i][i];
+    }
+
+    return det;
+}
+
+double matrix_norm(int n, double matrix[n][n]) {
+    double sum = 0.0;
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            sum += matrix[i][j] * matrix[i][j];
+        }
+    }
+
+    return sqrt(sum);
 }
