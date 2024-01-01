@@ -26,12 +26,15 @@
 void matrix_print(int n, double matrix[n][n], const char *format, ...);
 void matrix_copy(int n, double source[n][n], double destination[n][n]);
 void matrix_multiply(int n, double A[n][n], double B[n][n], double C[n][n]);
-void matrix_inversion_iteration(int n, double A[n][n], double B[n][n], double B_next[n][n]);
+void matrix_inversion_iteration(int n, double A[n][n], double B[n][n], double next[n][n]);
+
+void matrix_zero(int n, double matrix[n][n]);
 
 double matrix_norm(int n, double matrix[n][n]);
 double determinant(int n, double matrix[n][n]);
 
 bool is_identity(int n, double matrix[n][n]);
+
 bool matrix_has_invalid (int n, double matrix[n][n]);
 
 //double result[MATRIX_SIZE][MATRIX_SIZE];
@@ -54,37 +57,47 @@ int main(int argc, char* argv[])
 
     int n = MATRIX_SIZE;
 
-    matrix_print(n, A, "macierz A");
-    matrix_print(n, I, "macierz jednostkowa I");
-    matrix_print(n, B, "inicjacja macierzy odwróconej B");
+    matrix_print(n, A, "macierz");
+    matrix_print(n, I, "macierz jednostkowa");
+    matrix_print(n, B, "inicjalna macierz odwrócona");
 
-    double iter[n][n];
+    double next[n][n];
     double temp[n][n];
 
     bool found = false;
+    bool invalid = false;
     for (int i = 0; i < MAX_ITERATIONS; i++) {
-        matrix_inversion_iteration(n, A, B, iter);
-        matrix_print(n, iter, "iteracja %d macierzy odwróconej", i);
+//        matrix_zero(n, next);
+        matrix_inversion_iteration(n, A, B, next);
+        matrix_print(n, next, "iteracja %d", i);
 
         /* Sprawdzenie, czy pomnożenie macierzy docelowej (w tej iteracji),
          * przez macierz inicjalną
          * da macierz jednostkową. Jeśli tak, to znaczy,
          * że znaleziono macierz odwrotną do A.
          **/
-        matrix_multiply(n, iter, A, temp);
+//        matrix_zero(n, temp);
+        matrix_multiply(n, next, A, temp);
         if (is_identity(n, temp)) {
-            printf("FOUND!\n");
+            matrix_print(n,next, "Zakończono");
             found = true;
             break;
-        } else if (matrix_has_invalid(n, iter)) {
-            printf("\nNAN or INF detected.\n");
-            break;
-        } else {
-            matrix_copy(n, iter, B);
         }
+
+        if (matrix_has_invalid(n, next)) {
+            matrix_print(n,next, "NAN or INF detected");
+            invalid = true;
+            break;
+        }
+
+        matrix_copy(n, next, B);
     }
 
-    matrix_print(n,B, "Final B");
+    if (!found || invalid) {
+        printf("\nNiepowodzenie\n");
+    } else {
+        printf("\nOK\n");
+    }
 
     return 0;
 }
@@ -130,6 +143,14 @@ void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
     }
 }
 
+void matrix_zero(int n, double matrix[n][n]) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            matrix[i][j] = 0;
+        }
+    }
+}
+
 void matrix_copy(int n, double source[n][n], double destination[n][n])
 {
     for (int i = 0; i < n; i++) {
@@ -139,7 +160,7 @@ void matrix_copy(int n, double source[n][n], double destination[n][n])
     }
 }
 
-void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double b_next[n][n])
+void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double next[n][n])
 {
     double r[n][n], temp[n][n];
 
@@ -153,7 +174,7 @@ void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double b_
     matrix_multiply(n, r, b, temp);
     for(int i = 0; i < n; i++) {
         for(int j = 0; j < n; j++) {
-            b_next[i][j] = temp[i][j] + b[i][j];
+            next[i][j] = temp[i][j] + b[i][j];
         }
     }
 }
@@ -162,7 +183,7 @@ bool is_identity(int n, double matrix[n][n])
 {
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            if ((i == j && matrix[i][j] != 1) || (i != j && matrix[i][j] != 0)) {
+            if ((i == j && matrix[i][j] != 1.0) || (i != j && matrix[i][j] != 0.0)) {
                 return false;
             }
         }
