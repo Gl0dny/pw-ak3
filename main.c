@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <math.h>
+#include <omp.h>
 
 #define MAX_TITLE_LENGTH 512
 
@@ -18,6 +19,8 @@
 #include "vars_4.h"
 #elif MATRIX_SIZE == 5
 #include "vars_5.h"
+#elif MATRIX_SIZE == 6
+#include "vars_6.h"
 #elif MATRIX_SIZE == 10
 #include "vars_10.h"
 #else
@@ -31,21 +34,24 @@ void matrix_print(int n, double matrix[n][n], const char *format, ...);
 
 void matrix_copy(int n, double source[n][n], double destination[n][n]);
 void matrix_multiply(int n, double A[n][n], double B[n][n], double C[n][n]);
-void matrix_subtract(int n, double A[n][n], double B[n][n], double C[n][n]);
+//void matrix_subtract(int n, double A[n][n], double B[n][n], double C[n][n]);
 void matrix_inversion_iteration(int n, double A[n][n], double B[n][n], double B_next[n][n]);
+
+double matrix_norm(int n, double matrix[n][n]);
+bool matrix_has_invalid (int n, double matrix[n][n]);
 
 double determinant(int n, double matrix[n][n]);
 
 
 double result[MATRIX_SIZE][MATRIX_SIZE];
 
-int main()
+int main(int argc, char* argv[])
 {
 
-    if (MATRIX_SIZE == 2 &&
-            MATRIX_SIZE == 3 &&
-            MATRIX_SIZE == 4 &&
-            MATRIX_SIZE == 5) {
+    if (MATRIX_SIZE != 2 &&
+            MATRIX_SIZE != 3 &&
+            MATRIX_SIZE != 4 &&
+            MATRIX_SIZE != 5) {
         printf("Invalid MATRIX_SIZE");
         exit(1);
     }
@@ -66,6 +72,7 @@ int main()
     double B_next[MATRIX_SIZE][MATRIX_SIZE];
     double B_temp[MATRIX_SIZE][MATRIX_SIZE];
 
+    bool found = false;
     for (int iter = 0; iter < MAX_ITERATIONS; iter++) {
         matrix_inversion_iteration(MATRIX_SIZE, A, B, B_next);
         matrix_print(MATRIX_SIZE, B_next, "iter:%d, Next iteration of B", iter);
@@ -73,15 +80,40 @@ int main()
 
         if (is_identity(MATRIX_SIZE, B_temp)) {
             printf("FOUND!\n");
+            found = true;
+            break;
+        } else if (matrix_has_invalid(MATRIX_SIZE, B_next)) {
+            printf("\nNot-a-Number detected.\n");
             break;
         } else {
             matrix_copy(MATRIX_SIZE, B_next, B);
         }
-
-
     }
 
+    /**
+    if (!found) {
+        printf("\nNot-a-Numver of INF detected. Trying with matrix norm...\n");
+        double norm = matrix_norm(MATRIX_SIZE, A);
+        for(int i = 0; i < MATRIX_SIZE; i++) {
+            for(int j = 0; j < MATRIX_SIZE; j++) {
+                B[i][j] = (i == j) ? norm : 0.0;
+            }
+        }
 
+        for (int iter2 = 0; iter2 < MAX_ITERATIONS; iter2++) {
+            matrix_inversion_iteration(MATRIX_SIZE, A, B, B_next);
+            matrix_print(MATRIX_SIZE, B_next, "iter2:%d, Next iteration of B", iter2);
+            matrix_multiply(MATRIX_SIZE, B_next, A, B_temp);
+
+            if (is_identity(MATRIX_SIZE, B_temp)) {
+                printf("2 FOUND!\n");
+                break;
+            } else {
+                matrix_copy(MATRIX_SIZE, B_next, B);
+            }
+        }
+    }
+    **/
 
 
     matrix_print(MATRIX_SIZE, B, "Final B");
@@ -103,7 +135,7 @@ void matrix_print(int n, double matrix[n][n], const char *format, ...)
     vsnprintf(title, MAX_TITLE_LENGTH, format, args);
     va_end(args);
 
-    printf("%s: [\n", title);
+    printf("\n%s: [\n", title);
 
     int rows = n;
     int cols = n;
@@ -123,18 +155,10 @@ void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
             c[i][j] = 0;
 
             for(int k = 0; k < n; k++) {
+                // tu dodać printy
+                #pragma omp atomic
                 c[i][j] += a[i][k] * b[k][j];
             }
-        }
-    }
-}
-
-void matrix_subtract(int n, double a[n][n], double b[n][n], double c[n][n])
-{
-    // Odejmuje macierz B od A, wynik w C
-    for(int i = 0; i < n; i++) {
-        for(int j = 0; j < n; j++) {
-            c[i][j] = a[i][j] - b[i][j];
         }
     }
 }
@@ -227,4 +251,16 @@ double matrix_norm(int n, double matrix[n][n]) {
     }
 
     return sqrt(sum);
+}
+
+bool matrix_has_invalid (int n, double matrix[n][n]) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (isnan(matrix[i][j]) || isinf(matrix[i][j])) {
+               return true;
+            }
+        }
+    }
+
+    return false;
 }

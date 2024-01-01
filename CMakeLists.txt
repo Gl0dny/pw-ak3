@@ -4,6 +4,7 @@ project(pw-ak3 C)
 set(CMAKE_C_STANDARD 11)
 
 find_library(MATH_LIB m)
+find_package(OpenMP)
 
 add_executable(pw-ak3 main.c
         vars_2.h
