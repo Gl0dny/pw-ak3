@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <sys/time.h>
 #include <stdbool.h>
 #include <math.h>
 #include <omp.h>
@@ -41,42 +42,40 @@ bool matrix_has_invalid (int n, double matrix[n][n]);
 
 int main(int argc, char* argv[])
 {
-    if (MATRIX_SIZE != 2 &&
-            MATRIX_SIZE != 3 &&
-            MATRIX_SIZE != 4 &&
-            MATRIX_SIZE != 5) {
-        printf("Invalid MATRIX_SIZE");
-        exit(1);
-    }
-
-    printf("MATRIX_SIZE: %d\n", MATRIX_SIZE);
-    if (determinant(MATRIX_SIZE, A) == 0) {
-        printf("MACIERZ JEST OSOBLIWA.\n");
-        exit(0);
-    }
-
+    struct timeval start, end;
     int n = MATRIX_SIZE;
+    assert(n > 1 && n < 6);
 
-    matrix_print(n, A, "macierz");
-    matrix_print(n, I, "macierz jednostkowa");
-    matrix_print(n, B, "inicjalna macierz odwrócona");
+    #pragma omp master
+    {
+        printf("MATRIX_SIZE: %d\n", MATRIX_SIZE);
+        if (determinant(MATRIX_SIZE, A) == 0) {
+            printf("MACIERZ JEST OSOBLIWA.\n");
+            exit(0);
+        }
+
+        matrix_print(n, A, "macierz");
+        matrix_print(n, I, "macierz jednostkowa");
+        matrix_print(n, B, "inicjalna macierz odwrócona");
+
+        omp_set_num_threads(n*n);
+    }
 
     double next[n][n];
     double temp[n][n];
 
     bool found = false;
     bool invalid = false;
+
+    #pragma omp master
+    {
+        gettimeofday(&start, NULL);
+    }
+
     for (int i = 0; i < MAX_ITERATIONS; i++) {
-//        matrix_zero(n, next);
         matrix_inversion_iteration(n, A, B, next);
         matrix_print(n, next, "iteracja %d", i);
 
-        /* Sprawdzenie, czy pomnożenie macierzy docelowej (w tej iteracji),
-         * przez macierz inicjalną
-         * da macierz jednostkową. Jeśli tak, to znaczy,
-         * że znaleziono macierz odwrotną do A.
-         **/
-//        matrix_zero(n, temp);
         matrix_multiply(n, next, A, temp);
         if (is_identity(n, temp)) {
             matrix_print(n,next, "Zakończono");
@@ -93,10 +92,17 @@ int main(int argc, char* argv[])
         matrix_copy(n, next, B);
     }
 
-    if (!found || invalid) {
-        printf("\nNiepowodzenie\n");
-    } else {
-        printf("\nOK\n");
+    #pragma omp master
+    {
+        gettimeofday(&end, NULL);
+        double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
+        printf("\nCzas wykonania %.6f s\n", elapsed);
+
+        if (!found || invalid) {
+            printf("\nNiepowodzenie\n");
+        } else {
+            printf("\nOK\n");
+        }
     }
 
     return 0;
