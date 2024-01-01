@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
         }
 
         if (matrix_has_invalid(n, next)) {
-            matrix_print(n,next, "NAN or INF detected");
+            matrix_print(n,next, "NAN lub INF");
             invalid = true;
             break;
         }
