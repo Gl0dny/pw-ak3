@@ -19,35 +19,25 @@
 #include "vars_4.h"
 #elif MATRIX_SIZE == 5
 #include "vars_5.h"
-#elif MATRIX_SIZE == 6
-#include "vars_6.h"
-#elif MATRIX_SIZE == 10
-#include "vars_10.h"
 #else
 #include "vars_2.h"
 #endif
 
-
-
-bool is_identity(int n, double matrix[n][n]);
 void matrix_print(int n, double matrix[n][n], const char *format, ...);
-
 void matrix_copy(int n, double source[n][n], double destination[n][n]);
 void matrix_multiply(int n, double A[n][n], double B[n][n], double C[n][n]);
-//void matrix_subtract(int n, double A[n][n], double B[n][n], double C[n][n]);
 void matrix_inversion_iteration(int n, double A[n][n], double B[n][n], double B_next[n][n]);
 
 double matrix_norm(int n, double matrix[n][n]);
-bool matrix_has_invalid (int n, double matrix[n][n]);
-
 double determinant(int n, double matrix[n][n]);
 
+bool is_identity(int n, double matrix[n][n]);
+bool matrix_has_invalid (int n, double matrix[n][n]);
 
-double result[MATRIX_SIZE][MATRIX_SIZE];
+//double result[MATRIX_SIZE][MATRIX_SIZE];
 
 int main(int argc, char* argv[])
 {
-
     if (MATRIX_SIZE != 2 &&
             MATRIX_SIZE != 3 &&
             MATRIX_SIZE != 4 &&
@@ -62,62 +52,39 @@ int main(int argc, char* argv[])
         exit(0);
     }
 
-    matrix_print(MATRIX_SIZE, A, "A");
-    matrix_print(MATRIX_SIZE, I, "I");
+    int n = MATRIX_SIZE;
 
-    matrix_multiply(MATRIX_SIZE, A, I, result);
-    matrix_print(MATRIX_SIZE, result, "A * I");
+    matrix_print(n, A, "macierz A");
+    matrix_print(n, I, "macierz jednostkowa I");
+    matrix_print(n, B, "inicjacja macierzy odwróconej B");
 
-    matrix_print(MATRIX_SIZE, B, "B");
-    double B_next[MATRIX_SIZE][MATRIX_SIZE];
-    double B_temp[MATRIX_SIZE][MATRIX_SIZE];
+    double iter[n][n];
+    double temp[n][n];
 
     bool found = false;
-    for (int iter = 0; iter < MAX_ITERATIONS; iter++) {
-        matrix_inversion_iteration(MATRIX_SIZE, A, B, B_next);
-        matrix_print(MATRIX_SIZE, B_next, "iter:%d, Next iteration of B", iter);
-        matrix_multiply(MATRIX_SIZE, B_next, A, B_temp);
+    for (int i = 0; i < MAX_ITERATIONS; i++) {
+        matrix_inversion_iteration(n, A, B, iter);
+        matrix_print(n, iter, "iteracja %d macierzy odwróconej", i);
 
-        if (is_identity(MATRIX_SIZE, B_temp)) {
+        /* Sprawdzenie, czy pomnożenie macierzy docelowej (w tej iteracji),
+         * przez macierz inicjalną
+         * da macierz jednostkową. Jeśli tak, to znaczy,
+         * że znaleziono macierz odwrotną do A.
+         **/
+        matrix_multiply(n, iter, A, temp);
+        if (is_identity(n, temp)) {
             printf("FOUND!\n");
             found = true;
             break;
-        } else if (matrix_has_invalid(MATRIX_SIZE, B_next)) {
-            printf("\nNot-a-Number detected.\n");
+        } else if (matrix_has_invalid(n, iter)) {
+            printf("\nNAN or INF detected.\n");
             break;
         } else {
-            matrix_copy(MATRIX_SIZE, B_next, B);
+            matrix_copy(n, iter, B);
         }
     }
 
-    /**
-    if (!found) {
-        printf("\nNot-a-Numver of INF detected. Trying with matrix norm...\n");
-        double norm = matrix_norm(MATRIX_SIZE, A);
-        for(int i = 0; i < MATRIX_SIZE; i++) {
-            for(int j = 0; j < MATRIX_SIZE; j++) {
-                B[i][j] = (i == j) ? norm : 0.0;
-            }
-        }
-
-        for (int iter2 = 0; iter2 < MAX_ITERATIONS; iter2++) {
-            matrix_inversion_iteration(MATRIX_SIZE, A, B, B_next);
-            matrix_print(MATRIX_SIZE, B_next, "iter2:%d, Next iteration of B", iter2);
-            matrix_multiply(MATRIX_SIZE, B_next, A, B_temp);
-
-            if (is_identity(MATRIX_SIZE, B_temp)) {
-                printf("2 FOUND!\n");
-                break;
-            } else {
-                matrix_copy(MATRIX_SIZE, B_next, B);
-            }
-        }
-    }
-    **/
-
-
-    matrix_print(MATRIX_SIZE, B, "Final B");
-    matrix_multiply(MATRIX_SIZE, B, A, result);
+    matrix_print(n,B, "Final B");
 
     return 0;
 }
