@@ -8,7 +8,7 @@
 
 #define MAX_TITLE_LENGTH 512
 
-#define MATRIX_SIZE 2
+#define MATRIX_SIZE 5
 #define MAX_ITERATIONS 25
 
 #if MATRIX_SIZE == 2
