@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
     bool found = false;
     bool invalid = false;
 
-    omp_set_num_threads(n*n);
+//    omp_set_num_threads(n*n);
 
     printf("MATRIX_SIZE: %d\n", MATRIX_SIZE);
     if (determinant(MATRIX_SIZE, A) == 0) {
@@ -135,7 +135,8 @@ void matrix_print(int n, double matrix[n][n], const char *format, ...)
 void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
 {
 
-///*
+/*
+// openmp 1
 #pragma omp parallel
 {
     int thread_id = omp_get_thread_num();
@@ -149,6 +150,37 @@ void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
 
 #pragma omp barrier
 }
+*/
+
+/*
+// openmp 2
+    #pragma omp parallel for
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            c[i][j] = 0;
+
+            for (int k = 0; k < n; k++) {
+                // tu dodać printy
+                c[i][j] += a[i][k] * b[k][j];
+            }
+        }
+    }
+*/
+
+///*
+// openmp 3
+    int n_squared = n*n;
+    #pragma omp parallel for
+    for (int x = 0; x < n_squared; x++) {
+        int i = x / n;
+        int j = x % n;
+
+        c[i][j] = 0;
+        for (int k = 0; k < n; k++) {
+            // tu dodać printy
+            c[i][j] += a[i][k] * b[k][j];
+        }
+    }
 //*/
 
     /*
@@ -181,6 +213,7 @@ void matrix_copy(int n, double source[n][n], double destination[n][n])
 {
 
 /*
+// openmp 1
 #pragma omp parallel
 {
     int thread_id = omp_get_thread_num();
@@ -192,14 +225,21 @@ void matrix_copy(int n, double source[n][n], double destination[n][n])
 }
 */
 
-    ///*
+    #pragma omp parallel for
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            destination[i][j] = source[i][j];
+        }
+    }
+
+    /*
     // wersja sekwencyjna
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             destination[i][j] = source[i][j];
         }
     }
-    //*/
+    */
 }
 
 void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double next[n][n])
@@ -207,6 +247,7 @@ void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double ne
     double r[n][n], temp[n][n];
 
     /*
+    // openmp 1
     matrix_multiply(n, b, a, temp);
 #pragma omp parallel
 {
@@ -230,8 +271,29 @@ void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double ne
     }
     */
 
-
     ///*
+    // openmp 2
+    int n_squared = n*n;
+
+    matrix_multiply(n, b, a, temp);
+    #pragma omp parallel for
+    for (int x = 0; x < n_squared; x++) {
+        int i = x / n;
+        int j = x % n;
+        r[i][j] = (i == j) - temp[i][j];
+    }
+
+    matrix_multiply(n, r, b, temp);
+    #pragma omp parallel for
+    for (int x = 0; x < n_squared; x++) {
+        int i = x / n;
+        int j = x % n;
+        next[i][j] = temp[i][j] + b[i][j];
+    }
+
+    //*/
+
+    /*
     // wersja sekwencyjna
     matrix_multiply(n, b, a, temp);
     for(int i = 0; i < n; i++) {
@@ -246,7 +308,7 @@ void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double ne
             next[i][j] = temp[i][j] + b[i][j];
         }
     }
-    //*/
+    */
 }
 
 bool is_identity(int n, double matrix[n][n])
@@ -312,13 +374,18 @@ double matrix_norm(int n, double matrix[n][n]) {
 }
 
 bool matrix_has_invalid (int n, double matrix[n][n]) {
+//    int invalid = 0;
+
+//    #pragma omp parallel for reduction(+:invalid)
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             if (isnan(matrix[i][j]) || isinf(matrix[i][j])) {
                return true;
+//                invalid++;
             }
         }
     }
 
+//    return invalid < 1;
     return false;
 }
