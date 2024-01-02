@@ -38,13 +38,20 @@ bool is_identity(int n, double matrix[n][n]);
 
 bool matrix_has_invalid (int n, double matrix[n][n]);
 
-//double result[MATRIX_SIZE][MATRIX_SIZE];
 
 int main(int argc, char* argv[])
 {
     struct timeval start, end;
     int n = MATRIX_SIZE;
     assert(n > 1 && n < 6);
+
+    double next[n][n];
+    double temp[n][n];
+
+    bool found = false;
+    bool invalid = false;
+
+    omp_set_num_threads(n*n);
 
     #pragma omp master
     {
@@ -58,17 +65,6 @@ int main(int argc, char* argv[])
         matrix_print(n, I, "macierz jednostkowa");
         matrix_print(n, B, "inicjalna macierz odwrócona");
 
-        omp_set_num_threads(n*n);
-    }
-
-    double next[n][n];
-    double temp[n][n];
-
-    bool found = false;
-    bool invalid = false;
-
-    #pragma omp master
-    {
         gettimeofday(&start, NULL);
     }
 
@@ -78,7 +74,7 @@ int main(int argc, char* argv[])
 
         matrix_multiply(n, next, A, temp);
         if (is_identity(n, temp)) {
-            matrix_print(n,next, "Zakończono");
+            matrix_print(n,next, "Macierz odnaleziona");
             found = true;
             break;
         }
