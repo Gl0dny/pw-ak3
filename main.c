@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <sys/time.h>
+#include <time.h>
 #include <stdbool.h>
 #include <math.h>
 #include <omp.h>
@@ -53,24 +54,23 @@ int main(int argc, char* argv[])
 
     omp_set_num_threads(n*n);
 
-    #pragma omp master
-    {
-        printf("MATRIX_SIZE: %d\n", MATRIX_SIZE);
-        if (determinant(MATRIX_SIZE, A) == 0) {
-            printf("MACIERZ JEST OSOBLIWA.\n");
-            exit(0);
-        }
-
-        matrix_print(n, A, "macierz");
-        matrix_print(n, I, "macierz jednostkowa");
-        matrix_print(n, B, "inicjalna macierz odwrócona");
-
-        gettimeofday(&start, NULL);
+    printf("MATRIX_SIZE: %d\n", MATRIX_SIZE);
+    if (determinant(MATRIX_SIZE, A) == 0) {
+        printf("MACIERZ JEST OSOBLIWA.\n");
+        exit(0);
     }
 
-    for (int i = 0; i < MAX_ITERATIONS; i++) {
+    matrix_print(n, A, "macierz");
+    matrix_print(n, I, "macierz jednostkowa");
+    matrix_print(n, B, "inicjalna macierz odwrócona");
+
+    gettimeofday(&start, NULL);
+
+    clock_t cpu0 = clock();
+
+    int i;
+    for (i = 0; i < MAX_ITERATIONS; i++) {
         matrix_inversion_iteration(n, A, B, next);
-        matrix_print(n, next, "iteracja %d", i);
 
         matrix_multiply(n, next, A, temp);
         if (is_identity(n, temp)) {
@@ -84,21 +84,23 @@ int main(int argc, char* argv[])
             invalid = true;
             break;
         }
-
         matrix_copy(n, next, B);
     }
 
-    #pragma omp master
-    {
-        gettimeofday(&end, NULL);
-        double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
-        printf("\nCzas wykonania %.6f s\n", elapsed);
+    clock_t cpu1 = clock();
 
-        if (!found || invalid) {
-            printf("\nNiepowodzenie\n");
-        } else {
-            printf("\nOK\n");
-        }
+    gettimeofday(&end, NULL);
+    double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
+    printf("\nCzas wykonania %.6f s\n", elapsed);
+    double cpuTime = (double)(cpu1 - cpu0) / CLOCKS_PER_SEC;
+    printf("\nCzas procesora %.6f s\n", cpuTime);
+
+    if (!found || invalid) {
+        printf("\nNiepowodzenie");
+        invalid && printf("\nINF lub NAN\n");
+        !found && printf("\nNie znaleziono w %d iteracjach.\n", i);
+    } else {
+        printf("\nOK\n");
     }
 
     return 0;
@@ -132,17 +134,39 @@ void matrix_print(int n, double matrix[n][n], const char *format, ...)
 
 void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
 {
-    for(int i = 0; i < n; i++) {
-        for(int j = 0; j < n; j++) {
+
+///*
+#pragma omp parallel
+{
+    int thread_id = omp_get_thread_num();
+    int row = thread_id / n;
+    int col = thread_id % n;
+
+    c[row][col] = 0;
+    for (int k = 0; k < n; k++) {
+        c[row][col] += a[row][k] * b[k][col];
+    }
+
+#pragma omp barrier
+}
+//*/
+
+    /*
+    // wersja sekwencyjna
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
             c[i][j] = 0;
 
-            for(int k = 0; k < n; k++) {
+            for (int k = 0; k < n; k++) {
                 // tu dodać printy
                 #pragma omp atomic
                 c[i][j] += a[i][k] * b[k][j];
             }
         }
     }
+    */
+
+
 }
 
 void matrix_zero(int n, double matrix[n][n]) {
@@ -155,17 +179,60 @@ void matrix_zero(int n, double matrix[n][n]) {
 
 void matrix_copy(int n, double source[n][n], double destination[n][n])
 {
+
+/*
+#pragma omp parallel
+{
+    int thread_id = omp_get_thread_num();
+    int row = thread_id / n;
+    int col = thread_id % n;
+
+    destination[row][col] = source[row][col];
+#pragma omp barrier
+}
+*/
+
+    ///*
+    // wersja sekwencyjna
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             destination[i][j] = source[i][j];
         }
     }
+    //*/
 }
 
 void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double next[n][n])
 {
     double r[n][n], temp[n][n];
 
+    /*
+    matrix_multiply(n, b, a, temp);
+#pragma omp parallel
+{
+    int thread_id = omp_get_thread_num();
+    int row = thread_id / n;
+    int col = thread_id % n;
+
+    r[row][col] = (row == col) - temp[row][col];
+#pragma omp barrier
+}
+
+    matrix_multiply(n, r, b, temp);
+#pragma omp parallel
+    {
+        int thread_id = omp_get_thread_num();
+        int row = thread_id / n;
+        int col = thread_id % n;
+
+        r[row][col] = (row == col) - temp[row][col];
+#pragma omp barrier
+    }
+    */
+
+
+    ///*
+    // wersja sekwencyjna
     matrix_multiply(n, b, a, temp);
     for(int i = 0; i < n; i++) {
         for(int j = 0; j < n; j++) {
@@ -179,6 +246,7 @@ void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double ne
             next[i][j] = temp[i][j] + b[i][j];
         }
     }
+    //*/
 }
 
 bool is_identity(int n, double matrix[n][n])
