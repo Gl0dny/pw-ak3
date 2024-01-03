@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <sys/time.h>
+#include <time.h>
 #include <math.h>
 #include <omp.h>
 
@@ -41,13 +43,15 @@ bool matrix_has_invalid (int n, double matrix[n][n]);
 
 int main(int argc, char* argv[])
 {
-    if (MATRIX_SIZE != 2 &&
-            MATRIX_SIZE != 3 &&
-            MATRIX_SIZE != 4 &&
-            MATRIX_SIZE != 5) {
-        printf("Invalid MATRIX_SIZE");
-        exit(1);
-    }
+    struct timeval start, end;
+    int n = MATRIX_SIZE;
+    assert(n > 1 && n < 6);
+
+    double next[n][n];
+    double temp[n][n];
+
+    bool found = false;
+    bool invalid = false;
 
     printf("MATRIX_SIZE: %d\n", MATRIX_SIZE);
     if (determinant(MATRIX_SIZE, A) == 0) {
@@ -55,21 +59,18 @@ int main(int argc, char* argv[])
         exit(0);
     }
 
-    int n = MATRIX_SIZE;
-
     matrix_print(n, A, "macierz");
     matrix_print(n, I, "macierz jednostkowa");
     matrix_print(n, B, "inicjalna macierz odwrócona");
 
-    double next[n][n];
-    double temp[n][n];
+    gettimeofday(&start, NULL);
+    clock_t cpu0 = clock();
 
-    bool found = false;
-    bool invalid = false;
-    for (int i = 0; i < MAX_ITERATIONS; i++) {
+    int i;
+    for (i = 0; i < MAX_ITERATIONS; i++) {
 //        matrix_zero(n, next);
         matrix_inversion_iteration(n, A, B, next);
-        matrix_print(n, next, "iteracja %d", i);
+//        matrix_print(n, next, "iteracja %d", i);
 
         /* Sprawdzenie, czy pomnożenie macierzy docelowej (w tej iteracji),
          * przez macierz inicjalną
@@ -79,7 +80,7 @@ int main(int argc, char* argv[])
 //        matrix_zero(n, temp);
         matrix_multiply(n, next, A, temp);
         if (is_identity(n, temp)) {
-            matrix_print(n,next, "Zakończono");
+            matrix_print(n,next, "macierz odwrócona");
             found = true;
             break;
         }
@@ -93,8 +94,18 @@ int main(int argc, char* argv[])
         matrix_copy(n, next, B);
     }
 
+    clock_t cpu1 = clock();
+    gettimeofday(&end, NULL);
+
+    double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
+    printf("\nCzas wykonania %.6f s\n", elapsed);
+    double cpuTime = (double)(cpu1 - cpu0) / CLOCKS_PER_SEC;
+    printf("\nCzas procesora %.6f s\n", cpuTime);
+
     if (!found || invalid) {
-        printf("\nNiepowodzenie\n");
+        printf("\nNiepowodzenie");
+        invalid && printf("\nINF lub NAN\n");
+        !found && printf("\nNie znaleziono w %d iteracjach.\n", i);
     } else {
         printf("\nOK\n");
     }
