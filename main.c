@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
     bool found = false;
     bool invalid = false;
 
-//    omp_set_num_threads(n*n);
+//    omp_set_num_threads(16);
 
     printf("Wersja openmp, SIZE: %d\n", SIZE);
     matrix_copy(n, A, B);
