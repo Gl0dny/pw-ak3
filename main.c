@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 
 //    omp_set_num_threads(n*n);
 
-    printf("WERSJA openmp, ROZMIAR: %d\n", SIZE);
+    printf("Wersja openmp, SIZE: %d\n", SIZE);
     matrix_copy(n, A, B);
 
     gettimeofday(&start, NULL);
@@ -64,7 +64,6 @@ int main(int argc, char* argv[])
     int i;
     for (i = 0; i < MAX_ITERATIONS; i++) {
         matrix_inversion_iteration(n, A, B, next);
-
         matrix_multiply(n, next, A, temp);
         if (is_identity(n, temp)) {
             found = true;
@@ -83,16 +82,16 @@ int main(int argc, char* argv[])
 
     gettimeofday(&end, NULL);
     double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
-    printf("\nCzas wykonania %.6f s\n", elapsed);
+    printf("Czas wykonania %.6f s\n", elapsed);
     double cpuTime = (double)(cpu1 - cpu0) / CLOCKS_PER_SEC;
-    printf("\nCzas procesora %.6f s\n", cpuTime);
+    printf("Czas procesora %.6f s\n", cpuTime);
 
     if (!found || invalid) {
-        printf("\nNiepowodzenie");
-        invalid && printf("\nINF lub NAN\n");
-        !found && printf("\nNie znaleziono w %d iteracjach.\n", i);
+        printf("Niepowodzenie.\n");
+        invalid && printf("INF lub NAN\n");
+        !found && printf("Nie znaleziono w %d iteracjach.\n", i);
     } else {
-        printf("\nOK. Odnaleziono w %d iteracjach\n", i);
+        printf("OK. Odnaleziono w %d iteracjach\n", i);
     }
 
     return 0;
