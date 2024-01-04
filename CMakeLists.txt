@@ -11,6 +11,7 @@ add_executable(pw-ak3 main.c
         vars_13.h
         vars_33.h
         vars_50.h
-        vars_67.h)
+        vars_67.h
+        vars_100.h)
 
 target_link_libraries(pw-ak3 ${MATH_LIB})
