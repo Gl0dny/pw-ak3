@@ -10,18 +10,18 @@
 
 #define MAX_TITLE_LENGTH 512
 
-#define MATRIX_SIZE 67
+#define SIZE 67
 #define MAX_ITERATIONS 25
 
-#if MATRIX_SIZE == 5
+#if SIZE == 5
 #include "vars_5.h"
-#elif MATRIX_SIZE == 13
+#elif SIZE == 13
 #include "vars_13.h"
-#elif MATRIX_SIZE == 33
+#elif SIZE == 33
 #include "vars_33.h"
-#elif MATRIX_SIZE == 50
+#elif SIZE == 50
 #include "vars_50.h"
-#elif MATRIX_SIZE == 67
+#elif SIZE == 67
 #include "vars_67.h"
 #endif
 
@@ -36,15 +36,12 @@ double matrix_norm(int n, double matrix[n][n]);
 double determinant(int n, double matrix[n][n]);
 
 bool is_identity(int n, double matrix[n][n]);
-
 bool matrix_has_invalid (int n, double matrix[n][n]);
-
-//double result[MATRIX_SIZE][MATRIX_SIZE];
 
 int main(int argc, char* argv[])
 {
     struct timeval start, end;
-    int n = MATRIX_SIZE;
+    int n = SIZE;
     assert(n == 5 || n == 13 || n == 33 || n == 50 || n == 67);
 
     double next[n][n];
@@ -53,32 +50,18 @@ int main(int argc, char* argv[])
     bool found = false;
     bool invalid = false;
 
-    printf("MATRIX_SIZE: %d\n", MATRIX_SIZE);
-
-//    matrix_print(n, A, "macierz");
-//    matrix_print(n, I, "macierz jednostkowa");
+    printf("WERSJA sekwencyjna, ROZMIAR: %d\n", SIZE);
 
     matrix_copy(n, A, B);
-//    matrix_print(n, B, "inicjalna macierz odwrócona");
 
     gettimeofday(&start, NULL);
     clock_t cpu0 = clock();
 
     int i;
     for (i = 0; i < MAX_ITERATIONS; i++) {
-//        matrix_zero(n, next);
         matrix_inversion_iteration(n, A, B, next);
-//        matrix_print(n, next, "iteracja %d", i);
-
-        /* Sprawdzenie, czy pomnożenie macierzy docelowej (w tej iteracji),
-         * przez macierz inicjalną
-         * da macierz jednostkową. Jeśli tak, to znaczy,
-         * że znaleziono macierz odwrotną do A.
-         **/
-//        matrix_zero(n, temp);
         matrix_multiply(n, next, A, temp);
         if (is_identity(n, temp)) {
-//            matrix_print(n,next, "macierz odwrócona");
             found = true;
             break;
         }
