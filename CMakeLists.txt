@@ -11,6 +11,7 @@ add_executable(pw-ak3 main.c
         vars_13.h
         vars_33.h
         vars_50.h
-        vars_67.h)
+        vars_67.h
+        vars_100.h)
 
 target_link_libraries(pw-ak3 PUBLIC ${MATH_LIB} OpenMP::OpenMP_C)

@@ -10,7 +10,7 @@
 
 #define MAX_TITLE_LENGTH 512
 
-#define SIZE 67
+#define SIZE 100
 #define MAX_ITERATIONS 25
 
 #if SIZE == 5
@@ -23,6 +23,8 @@
 #include "vars_50.h"
 #elif SIZE == 67
 #include "vars_67.h"
+#elif SIZE == 100
+#include "vars_100.h"
 #endif
 
 void matrix_print(int n, double matrix[n][n], const char *format, ...);
@@ -44,7 +46,7 @@ int main(int argc, char* argv[])
 {
     struct timeval start, end;
     int n = SIZE;
-    assert(n == 5 || n == 13 || n == 33 || n == 50 || n == 67);
+    assert(n == 5 || n == 13 || n == 33 || n == 50 || n == 67 || n == 100);
 
     double next[n][n];
     double temp[n][n];
