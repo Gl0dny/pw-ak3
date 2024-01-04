@@ -7,9 +7,10 @@ find_library(MATH_LIB m)
 find_package(OpenMP)
 
 add_executable(pw-ak3 main.c
-        vars_2.h
-        vars_3.h
-        vars_4.h
-        vars_5.h)
+        vars_5.h
+        vars_13.h
+        vars_33.h
+        vars_50.h
+        vars_67.h)
 
 target_link_libraries(pw-ak3 PUBLIC ${MATH_LIB} OpenMP::OpenMP_C)

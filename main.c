@@ -13,20 +13,16 @@
 #define MATRIX_SIZE 50
 #define MAX_ITERATIONS 25
 
-#if MATRIX_SIZE == 2
-#include "vars_2.h"
-#elif MATRIX_SIZE == 3
-#include "vars_3.h"
-#elif MATRIX_SIZE == 4
-#include "vars_4.h"
-#elif MATRIX_SIZE == 5
+#if MATRIX_SIZE == 5
 #include "vars_5.h"
+#elif MATRIX_SIZE == 13
+#include "vars_13.h"
 #elif MATRIX_SIZE == 33
 #include "vars_33.h"
 #elif MATRIX_SIZE == 50
 #include "vars_50.h"
-#else
-#include "vars_2.h"
+#elif MATRIX_SIZE == 67
+#include "vars_67.h"
 #endif
 
 void matrix_print(int n, double matrix[n][n], const char *format, ...);
