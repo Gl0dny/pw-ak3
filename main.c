@@ -5,12 +5,13 @@
 #include <stdbool.h>
 #include <sys/time.h>
 #include <time.h>
+#include <inttypes.h>
 #include <math.h>
 #include <omp.h>
 
 #define MAX_TITLE_LENGTH 512
 
-#define SIZE 100
+#define SIZE 5
 #define MAX_ITERATIONS 25
 
 #if SIZE == 5
@@ -58,15 +59,34 @@ int main(int argc, char* argv[])
 
     gettimeofday(&start, NULL);
     clock_t cpu0 = clock();
+    bool identified = false;
 
     int i;
+    double diff, epsilon = 1e-6;
     for (i = 0; i < MAX_ITERATIONS; i++) {
         matrix_inversion_iteration(n, A, B, next);
         matrix_multiply(n, next, A, temp);
-        if (is_identity(n, temp)) {
+        diff = fabs(matrix_norm(n, temp) - sqrt(n));
+        if (diff < epsilon) {
             found = true;
+            matrix_print(n, temp, "1 Jednostkowa");
             break;
+        } else {
+            printf("Iteracja %d -- diff %.6f\n", i, diff);
         }
+        ///*
+//        matrix_multiply(n, next, A, temp);
+        if (is_identity(n, temp)) {
+            if (!identified) {
+                printf("Iteracja %d -- znaleziono jednostkową\n", i);
+                printf("Norma dla niej to %.6f\n", matrix_norm(n, temp));
+                matrix_print(n, temp, "2 Jednostkowa");
+                identified = true;
+            }
+//            found = true;
+//            break;
+        }
+        //*/
 
         if (matrix_has_invalid(n, next)) {
             matrix_print(n,next, "NAN lub INF");
@@ -183,44 +203,6 @@ bool is_identity(int n, double matrix[n][n])
         }
     }
     return true;
-}
-
-double determinant(int n, double matrix[n][n])
-{
-    int i, j, k;
-    double det = 1;
-    double ratio;
-
-    for (i = 0; i < n; i++) {
-        if (matrix[i][i] == 0.0) {
-            for (j = i + 1; j < n; j++) {
-                if (matrix[j][i] != 0.0) {
-                    for (k = 0; k < n; k++) {
-                        double temp = matrix[i][k];
-                        matrix[i][k] = matrix[j][k];
-                        matrix[j][k] = temp;
-                    }
-                    det *= -1;
-                    break;
-                }
-            }
-        }
-
-        if (matrix[i][i] == 0.0)
-            return 0;
-
-        for (j = i + 1; j < n; j++) {
-            ratio = matrix[j][i] / matrix[i][i];
-            for (k = i; k < n; k++)
-                matrix[j][k] -= ratio * matrix[i][k];
-        }
-    }
-
-    for (i = 0; i < n; i++) {
-        det *= matrix[i][i];
-    }
-
-    return det;
 }
 
 double matrix_norm(int n, double matrix[n][n]) {

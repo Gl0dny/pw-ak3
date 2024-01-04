@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 project(pw-ak3 C)
 
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_GENERATOR_PLATFORM 64)
 
 find_library(MATH_LIB m)
 find_package(OpenMP)
