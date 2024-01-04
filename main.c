@@ -10,7 +10,7 @@
 
 #define MAX_TITLE_LENGTH 512
 
-#define MATRIX_SIZE 5
+#define MATRIX_SIZE 33
 #define MAX_ITERATIONS 25
 
 #if MATRIX_SIZE == 2
@@ -21,6 +21,8 @@
 #include "vars_4.h"
 #elif MATRIX_SIZE == 5
 #include "vars_5.h"
+#elif MATRIX_SIZE == 33
+#include "vars_33.h"
 #else
 #include "vars_2.h"
 #endif
@@ -45,7 +47,7 @@ int main(int argc, char* argv[])
 {
     struct timeval start, end;
     int n = MATRIX_SIZE;
-    assert(n > 1 && n < 6);
+    assert(n == 33 || (n > 1 && n < 6));
 
     double next[n][n];
     double temp[n][n];
@@ -54,13 +56,11 @@ int main(int argc, char* argv[])
     bool invalid = false;
 
     printf("MATRIX_SIZE: %d\n", MATRIX_SIZE);
-    if (determinant(MATRIX_SIZE, A) == 0) {
-        printf("MACIERZ JEST OSOBLIWA.\n");
-        exit(0);
-    }
 
     matrix_print(n, A, "macierz");
     matrix_print(n, I, "macierz jednostkowa");
+
+    matrix_copy(n, A, B);
     matrix_print(n, B, "inicjalna macierz odwrócona");
 
     gettimeofday(&start, NULL);
@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
         invalid && printf("\nINF lub NAN\n");
         !found && printf("\nNie znaleziono w %d iteracjach.\n", i);
     } else {
-        printf("\nOK\n");
+        printf("\nOK. Odnaleziono w %d iteracjach.\n", i);
     }
 
     return 0;
