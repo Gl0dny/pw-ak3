@@ -11,7 +11,7 @@
 
 #define MAX_TITLE_LENGTH 512
 
-#define SIZE 5
+#define SIZE 100
 #define MAX_ITERATIONS 25
 
 #if SIZE == 5
@@ -65,35 +65,18 @@ int main(int argc, char* argv[])
     double diff, epsilon = 1e-6;
     for (i = 0; i < MAX_ITERATIONS; i++) {
         matrix_inversion_iteration(n, A, B, next);
-        matrix_multiply(n, next, A, temp);
-        diff = fabs(matrix_norm(n, temp) - sqrt(n));
-        if (diff < epsilon) {
-            found = true;
-            matrix_print(n, temp, "1 Jednostkowa");
-            break;
-        } else {
-            printf("Iteracja %d -- diff %.6f\n", i, diff);
-        }
-        ///*
-//        matrix_multiply(n, next, A, temp);
-        if (is_identity(n, temp)) {
-            if (!identified) {
-                printf("Iteracja %d -- znaleziono jednostkową\n", i);
-                printf("Norma dla niej to %.6f\n", matrix_norm(n, temp));
-                matrix_print(n, temp, "2 Jednostkowa");
-                identified = true;
-            }
-//            found = true;
-//            break;
-        }
-        //*/
-
         if (matrix_has_invalid(n, next)) {
             matrix_print(n,next, "NAN lub INF");
             invalid = true;
             break;
         }
 
+        matrix_multiply(n, next, A, temp);
+        diff = fabs(matrix_norm(n, temp) - sqrt(n));
+        if (diff < epsilon) {
+            found = true;
+            break;
+        }
         matrix_copy(n, next, B);
     }
 
