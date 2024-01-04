@@ -10,18 +10,18 @@
 
 #define MAX_TITLE_LENGTH 512
 
-#define MATRIX_SIZE 50
+#define SIZE 67
 #define MAX_ITERATIONS 25
 
-#if MATRIX_SIZE == 5
+#if SIZE == 5
 #include "vars_5.h"
-#elif MATRIX_SIZE == 13
+#elif SIZE == 13
 #include "vars_13.h"
-#elif MATRIX_SIZE == 33
+#elif SIZE == 33
 #include "vars_33.h"
-#elif MATRIX_SIZE == 50
+#elif SIZE == 50
 #include "vars_50.h"
-#elif MATRIX_SIZE == 67
+#elif SIZE == 67
 #include "vars_67.h"
 #endif
 
@@ -43,8 +43,8 @@ bool matrix_has_invalid (int n, double matrix[n][n]);
 int main(int argc, char* argv[])
 {
     struct timeval start, end;
-    int n = MATRIX_SIZE;
-    assert(n == 33 || n == 50 || (n > 1 && n < 6));
+    int n = SIZE;
+    assert(n == 5 || n == 13 || n == 33 || n == 50 || n == 67);
 
     double next[n][n];
     double temp[n][n];
@@ -54,13 +54,8 @@ int main(int argc, char* argv[])
 
 //    omp_set_num_threads(n*n);
 
-    printf("MATRIX_SIZE: %d\n", MATRIX_SIZE);
-
-//    matrix_print(n, A, "macierz");
-//    matrix_print(n, I, "macierz jednostkowa");
-
+    printf("WERSJA openmp, ROZMIAR: %d\n", SIZE);
     matrix_copy(n, A, B);
-//    matrix_print(n, B, "inicjalna macierz odwrócona");
 
     gettimeofday(&start, NULL);
 
@@ -72,7 +67,6 @@ int main(int argc, char* argv[])
 
         matrix_multiply(n, next, A, temp);
         if (is_identity(n, temp)) {
-//            matrix_print(n,next, "Macierz odnaleziona");
             found = true;
             break;
         }
