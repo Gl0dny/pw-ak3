@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
     bool found = false;
     bool invalid = false;
 
-    printf("WERSJA sekwencyjna, ROZMIAR: %d\n", SIZE);
+    printf("Wersja sekwencyjna, SIZE: %d\n", SIZE);
 
     matrix_copy(n, A, B);
 
