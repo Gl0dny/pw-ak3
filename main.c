@@ -10,7 +10,7 @@
 
 #define MAX_TITLE_LENGTH 512
 
-#define MATRIX_SIZE 33
+#define MATRIX_SIZE 50
 #define MAX_ITERATIONS 25
 
 #if MATRIX_SIZE == 2
@@ -23,6 +23,8 @@
 #include "vars_5.h"
 #elif MATRIX_SIZE == 33
 #include "vars_33.h"
+#elif MATRIX_SIZE == 50
+#include "vars_50.h"
 #else
 #include "vars_2.h"
 #endif
@@ -46,7 +48,7 @@ int main(int argc, char* argv[])
 {
     struct timeval start, end;
     int n = MATRIX_SIZE;
-    assert(n == 33 || (n > 1 && n < 6));
+    assert(n == 33 || n == 50 || (n > 1 && n < 6));
 
     double next[n][n];
     double temp[n][n];
@@ -58,11 +60,11 @@ int main(int argc, char* argv[])
 
     printf("MATRIX_SIZE: %d\n", MATRIX_SIZE);
 
-    matrix_print(n, A, "macierz");
-    matrix_print(n, I, "macierz jednostkowa");
+//    matrix_print(n, A, "macierz");
+//    matrix_print(n, I, "macierz jednostkowa");
 
     matrix_copy(n, A, B);
-    matrix_print(n, B, "inicjalna macierz odwrócona");
+//    matrix_print(n, B, "inicjalna macierz odwrócona");
 
     gettimeofday(&start, NULL);
 
@@ -74,7 +76,7 @@ int main(int argc, char* argv[])
 
         matrix_multiply(n, next, A, temp);
         if (is_identity(n, temp)) {
-            matrix_print(n,next, "Macierz odnaleziona");
+//            matrix_print(n,next, "Macierz odnaleziona");
             found = true;
             break;
         }
