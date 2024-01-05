@@ -53,7 +53,12 @@ int main(int argc, char* argv[])
 
 //    omp_set_num_threads(16);
 
+#ifdef FLAT_PARALLEL
+    printf("Wersja openmp-flat, SIZE: %d\n", SIZE);
+#else
     printf("Wersja openmp, SIZE: %d\n", SIZE);
+#endif
+
 
     matrix_copy(n, A, B);
 
@@ -127,40 +132,8 @@ void matrix_print(int n, double matrix[n][n], const char *format, ...)
 void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
 {
 
-/*
-// openmp 1
-#pragma omp parallel
-{
-    int thread_id = omp_get_thread_num();
-    int row = thread_id / n;
-    int col = thread_id % n;
-
-    c[row][col] = 0;
-    for (int k = 0; k < n; k++) {
-        c[row][col] += a[row][k] * b[k][col];
-    }
-
-#pragma omp barrier
-}
-*/
-
-/*
-// openmp 2
-    #pragma omp parallel for
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            c[i][j] = 0;
-
-            for (int k = 0; k < n; k++) {
-                // tu dodać printy
-                c[i][j] += a[i][k] * b[k][j];
-            }
-        }
-    }
-*/
-
-///*
-// openmp 3
+//#define FLAT_PARALLEL
+#ifdef FLAT_PARALLEL
     int n_squared = n*n;
     #pragma omp parallel for
     for (int x = 0; x < n_squared; x++) {
@@ -169,11 +142,21 @@ void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
 
         c[i][j] = 0;
         for (int k = 0; k < n; k++) {
-            // tu dodać printy
             c[i][j] += a[i][k] * b[k][j];
         }
     }
-//*/
+#else
+    #pragma omp parallel for
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            c[i][j] = 0;
+
+            for (int k = 0; k < n; k++) {
+                c[i][j] += a[i][k] * b[k][j];
+            }
+        }
+    }
+#endif
 
     /*
     // wersja sekwencyjna
@@ -182,7 +165,6 @@ void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
             c[i][j] = 0;
 
             for (int k = 0; k < n; k++) {
-                // tu dodać printy
                 #pragma omp atomic
                 c[i][j] += a[i][k] * b[k][j];
             }
@@ -204,25 +186,23 @@ void matrix_zero(int n, double matrix[n][n]) {
 void matrix_copy(int n, double source[n][n], double destination[n][n])
 {
 
-/*
-// openmp 1
-#pragma omp parallel
-{
-    int thread_id = omp_get_thread_num();
-    int row = thread_id / n;
-    int col = thread_id % n;
-
-    destination[row][col] = source[row][col];
-#pragma omp barrier
-}
-*/
-
+//#define FLAT_PARALLEL
+#ifdef FLAT_PARALLEL
+    int n_squared = n*n;
+    #pragma omp parallel for
+    for (int x = 0; x < n_squared; x++) {
+        int i = x / n;
+        int j = x % n;
+        destination[i][j] = source[i][j];
+    }
+#else
     #pragma omp parallel for
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             destination[i][j] = source[i][j];
         }
     }
+#endif
 
     /*
     // wersja sekwencyjna
@@ -238,33 +218,8 @@ void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double ne
 {
     double r[n][n], temp[n][n];
 
-    /*
-    // openmp 1
-    matrix_multiply(n, b, a, temp);
-#pragma omp parallel
-{
-    int thread_id = omp_get_thread_num();
-    int row = thread_id / n;
-    int col = thread_id % n;
-
-    r[row][col] = (row == col) - temp[row][col];
-#pragma omp barrier
-}
-
-    matrix_multiply(n, r, b, temp);
-#pragma omp parallel
-    {
-        int thread_id = omp_get_thread_num();
-        int row = thread_id / n;
-        int col = thread_id % n;
-
-        r[row][col] = (row == col) - temp[row][col];
-#pragma omp barrier
-    }
-    */
-
-    ///*
-    // openmp 2
+//#define FLAT_PARALLEL
+#ifdef FLAT_PARALLEL
     int n_squared = n*n;
 
     matrix_multiply(n, b, a, temp);
@@ -282,8 +237,23 @@ void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double ne
         int j = x % n;
         next[i][j] = temp[i][j] + b[i][j];
     }
+#else
+    matrix_multiply(n, b, a, temp);
+    #pragma omp parallel for
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < n; j++) {
+            r[i][j] = (i == j) - temp[i][j];
+        }
+    }
 
-    //*/
+    matrix_multiply(n, r, b, temp);
+    #pragma omp parallel for
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < n; j++) {
+            next[i][j] = temp[i][j] + b[i][j];
+        }
+    }
+#endif
 
     /*
     // wersja sekwencyjna
