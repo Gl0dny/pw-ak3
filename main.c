@@ -59,7 +59,6 @@ int main(int argc, char* argv[])
     printf("Wersja openmp, SIZE: %d\n", SIZE);
 #endif
 
-
     matrix_copy(n, A, B);
 
     gettimeofday(&start, NULL);
