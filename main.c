@@ -6,12 +6,10 @@
 #include <time.h>
 #include <stdbool.h>
 #include <math.h>
+#include <inttypes.h>
 #include <omp.h>
 
 #define MAX_TITLE_LENGTH 512
-
-#define SIZE 100
-#define MAX_ITERATIONS 25
 
 #if SIZE == 5
 #include "vars_5.h"
@@ -27,18 +25,16 @@
 #include "vars_100.h"
 #endif
 
+
 void matrix_print(int n, double matrix[n][n], const char *format, ...);
 void matrix_copy(int n, double source[n][n], double destination[n][n]);
 void matrix_multiply(int n, double A[n][n], double B[n][n], double C[n][n]);
 void matrix_inversion_iteration(int n, double A[n][n], double B[n][n], double next[n][n]);
-
 void matrix_zero(int n, double matrix[n][n]);
 
 double matrix_norm(int n, double matrix[n][n]);
-double determinant(int n, double matrix[n][n]);
 
 bool is_identity(int n, double matrix[n][n]);
-
 bool matrix_has_invalid (int n, double matrix[n][n]);
 
 
@@ -46,6 +42,7 @@ int main(int argc, char* argv[])
 {
     struct timeval start, end;
     int n = SIZE;
+    double n_sqrt = sqrt(n);
     assert(n == 5 || n == 13 || n == 33 || n == 50 || n == 67 || n == 100);
 
     double next[n][n];
@@ -57,32 +54,34 @@ int main(int argc, char* argv[])
 //    omp_set_num_threads(16);
 
     printf("Wersja openmp, SIZE: %d\n", SIZE);
+
     matrix_copy(n, A, B);
 
     gettimeofday(&start, NULL);
-
     clock_t cpu0 = clock();
 
     int i;
-    for (i = 0; i < MAX_ITERATIONS; i++) {
+    double diff, epsilon = 1e-6;
+    for (i = 0; i < INT64_MAX; i++) {
         matrix_inversion_iteration(n, A, B, next);
-        matrix_multiply(n, next, A, temp);
-        if (is_identity(n, temp)) {
-            found = true;
-            break;
-        }
-
         if (matrix_has_invalid(n, next)) {
             matrix_print(n,next, "NAN lub INF");
             invalid = true;
+            break;
+        }
+
+        matrix_multiply(n, next, A, temp);
+        diff = fabs(matrix_norm(n, temp) - n_sqrt);
+        if (diff < epsilon) {
+            found = true;
             break;
         }
         matrix_copy(n, next, B);
     }
 
     clock_t cpu1 = clock();
-
     gettimeofday(&end, NULL);
+
     double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
     printf("Czas wykonania %.6f s\n", elapsed);
     double cpuTime = (double)(cpu1 - cpu0) / CLOCKS_PER_SEC;
@@ -314,44 +313,6 @@ bool is_identity(int n, double matrix[n][n])
         }
     }
     return true;
-}
-
-double determinant(int n, double matrix[n][n])
-{
-    int i, j, k;
-    double det = 1;
-    double ratio;
-
-    for (i = 0; i < n; i++) {
-        if (matrix[i][i] == 0.0) {
-            for (j = i + 1; j < n; j++) {
-                if (matrix[j][i] != 0.0) {
-                    for (k = 0; k < n; k++) {
-                        double temp = matrix[i][k];
-                        matrix[i][k] = matrix[j][k];
-                        matrix[j][k] = temp;
-                    }
-                    det *= -1;
-                    break;
-                }
-            }
-        }
-
-        if (matrix[i][i] == 0.0)
-            return 0;
-
-        for (j = i + 1; j < n; j++) {
-            ratio = matrix[j][i] / matrix[i][i];
-            for (k = i; k < n; k++)
-                matrix[j][k] -= ratio * matrix[i][k];
-        }
-    }
-
-    for (i = 0; i < n; i++) {
-        det *= matrix[i][i];
-    }
-
-    return det;
 }
 
 double matrix_norm(int n, double matrix[n][n]) {
