@@ -11,7 +11,7 @@
 
 #define MAX_TITLE_LENGTH 512
 
-#define SIZE 100
+//#define SIZE 0
 #define MAX_ITERATIONS 25
 
 #if SIZE == 5
@@ -45,6 +45,7 @@ int main(int argc, char* argv[])
 {
     struct timeval start, end;
     int n = SIZE;
+    double n_sqrt = sqrt(n);
     assert(n == 5 || n == 13 || n == 33 || n == 50 || n == 67 || n == 100);
 
     double next[n][n];
@@ -63,7 +64,7 @@ int main(int argc, char* argv[])
 
     int i;
     double diff, epsilon = 1e-6;
-    for (i = 0; i < MAX_ITERATIONS; i++) {
+    for (i = 0; i < INT64_MAX; i++) {
         matrix_inversion_iteration(n, A, B, next);
         if (matrix_has_invalid(n, next)) {
             matrix_print(n,next, "NAN lub INF");
@@ -72,7 +73,7 @@ int main(int argc, char* argv[])
         }
 
         matrix_multiply(n, next, A, temp);
-        diff = fabs(matrix_norm(n, temp) - sqrt(n));
+        diff = fabs(matrix_norm(n, temp) - n_sqrt);
         if (diff < epsilon) {
             found = true;
             break;
