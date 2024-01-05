@@ -130,21 +130,6 @@ void matrix_print(int n, double matrix[n][n], const char *format, ...)
 
 void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
 {
-
-//#define FLAT_PARALLEL
-#ifdef FLAT_PARALLEL
-    int n_squared = n*n;
-    #pragma omp parallel for
-    for (int x = 0; x < n_squared; x++) {
-        int i = x / n;
-        int j = x % n;
-
-        c[i][j] = 0;
-        for (int k = 0; k < n; k++) {
-            c[i][j] += a[i][k] * b[k][j];
-        }
-    }
-#else
     #pragma omp parallel for
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -155,7 +140,6 @@ void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
             }
         }
     }
-#endif
 
     /*
     // wersja sekwencyjna
@@ -184,24 +168,12 @@ void matrix_zero(int n, double matrix[n][n]) {
 
 void matrix_copy(int n, double source[n][n], double destination[n][n])
 {
-
-//#define FLAT_PARALLEL
-#ifdef FLAT_PARALLEL
-    int n_squared = n*n;
-    #pragma omp parallel for
-    for (int x = 0; x < n_squared; x++) {
-        int i = x / n;
-        int j = x % n;
-        destination[i][j] = source[i][j];
-    }
-#else
     #pragma omp parallel for
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             destination[i][j] = source[i][j];
         }
     }
-#endif
 
     /*
     // wersja sekwencyjna
@@ -217,26 +189,6 @@ void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double ne
 {
     double r[n][n], temp[n][n];
 
-//#define FLAT_PARALLEL
-#ifdef FLAT_PARALLEL
-    int n_squared = n*n;
-
-    matrix_multiply(n, b, a, temp);
-    #pragma omp parallel for
-    for (int x = 0; x < n_squared; x++) {
-        int i = x / n;
-        int j = x % n;
-        r[i][j] = (i == j) - temp[i][j];
-    }
-
-    matrix_multiply(n, r, b, temp);
-    #pragma omp parallel for
-    for (int x = 0; x < n_squared; x++) {
-        int i = x / n;
-        int j = x % n;
-        next[i][j] = temp[i][j] + b[i][j];
-    }
-#else
     matrix_multiply(n, b, a, temp);
     #pragma omp parallel for
     for(int i = 0; i < n; i++) {
@@ -252,7 +204,6 @@ void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double ne
             next[i][j] = temp[i][j] + b[i][j];
         }
     }
-#endif
 
     /*
     // wersja sekwencyjna
