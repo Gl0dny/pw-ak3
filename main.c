@@ -6,7 +6,6 @@
 #include <time.h>
 #include <stdbool.h>
 #include <math.h>
-#include <inttypes.h>
 #include <omp.h>
 
 #ifndef MAX_ITERATIONS
@@ -123,7 +122,8 @@ void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
     */
 }
 
-void matrix_subtract(int n, double a[n][n], double b[n][n], double c[n][n]) {
+void matrix_subtract(int n, double a[n][n], double b[n][n], double c[n][n])
+{
     for(int i = 0; i < n; i++) {
         for(int j = 0; j < n; j++) {
             c[i][j] = a[i][j] - b[i][j];
@@ -186,7 +186,8 @@ void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double ne
     */
 }
 
-double matrix_norm(int n, double matrix[n][n]) {
+double matrix_norm(int n, double matrix[n][n])
+{
     double sum = 0.0;
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -196,7 +197,8 @@ double matrix_norm(int n, double matrix[n][n]) {
     return sqrt(sum);
 }
 
-bool matrix_has_invalid (int n, double matrix[n][n]) {
+bool matrix_has_invalid (int n, double matrix[n][n])
+{
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             if (isnan(matrix[i][j]) || isinf(matrix[i][j])) {
