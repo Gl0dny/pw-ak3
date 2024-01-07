@@ -11,6 +11,10 @@
 
 #define MAX_TITLE_LENGTH 512
 
+#ifndef MAX_ITERATIONS
+#define MAX_ITERATIONS 512
+#endif
+
 #if SIZE == 5
 #include "vars_5.h"
 #elif SIZE == 13
@@ -30,11 +34,10 @@ void matrix_print(int n, double matrix[n][n], const char *format, ...);
 void matrix_copy(int n, double source[n][n], double destination[n][n]);
 void matrix_multiply(int n, double A[n][n], double B[n][n], double C[n][n]);
 void matrix_inversion_iteration(int n, double A[n][n], double B[n][n], double next[n][n]);
-void matrix_zero(int n, double matrix[n][n]);
+void matrix_subtract(int n, double a[n][n], double b[n][n], double c[n][n]);
 
 double matrix_norm(int n, double matrix[n][n]);
 
-bool is_identity(int n, double matrix[n][n]);
 bool matrix_has_invalid (int n, double matrix[n][n]);
 
 
@@ -42,7 +45,6 @@ int main(int argc, char* argv[])
 {
     struct timeval start, end;
     int n = SIZE;
-    double n_sqrt = sqrt(n);
     assert(n == 5 || n == 13 || n == 33 || n == 50 || n == 67 || n == 100);
 
     double next[n][n];
@@ -59,8 +61,8 @@ int main(int argc, char* argv[])
     clock_t cpu0 = clock();
 
     int i;
-    double diff, epsilon = 1e-6;
-    for (i = 0; i < INT64_MAX; i++) {
+    double epsilon = 1e-6;
+    for (i = 0; i < MAX_ITERATIONS; i++) {
         matrix_inversion_iteration(n, A, B, next);
         if (matrix_has_invalid(n, next)) {
             matrix_print(n,next, "NAN lub INF");
@@ -69,8 +71,7 @@ int main(int argc, char* argv[])
         }
 
         matrix_multiply(n, next, A, temp);
-        diff = fabs(matrix_norm(n, temp) - n_sqrt);
-        if (diff < epsilon) {
+        if (fabs(matrix_norm(n, temp) - sqrt(n)) < epsilon) {
             found = true;
             break;
         }
@@ -89,8 +90,11 @@ int main(int argc, char* argv[])
         printf("Niepowodzenie.\n");
         invalid && printf("INF lub NAN\n");
         !found && printf("Nie znaleziono w %d iteracjach.\n", i);
+
     } else {
-        printf("OK. Odnaleziono w %d iteracjach\n", i);
+        matrix_multiply(n, next, A, temp);
+        matrix_subtract(n, temp, I, temp);
+        printf("OK. Odnaleziono w %d iteracjach. Błąd: %.10f\n", i, matrix_norm(n, temp));
     }
 
     return 0;
@@ -148,14 +152,12 @@ void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
         }
     }
     */
-
-
 }
 
-void matrix_zero(int n, double matrix[n][n]) {
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            matrix[i][j] = 0;
+void matrix_subtract(int n, double a[n][n], double b[n][n], double c[n][n]) {
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < n; j++) {
+            c[i][j] = a[i][j] - b[i][j];
         }
     }
 }
@@ -217,43 +219,23 @@ void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double ne
     */
 }
 
-bool is_identity(int n, double matrix[n][n])
-{
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            if ((i == j && matrix[i][j] != 1.0) || (i != j && matrix[i][j] != 0.0)) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
 double matrix_norm(int n, double matrix[n][n]) {
     double sum = 0.0;
-
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             sum += matrix[i][j] * matrix[i][j];
         }
     }
-
     return sqrt(sum);
 }
 
 bool matrix_has_invalid (int n, double matrix[n][n]) {
-//    int invalid = 0;
-
-//    #pragma omp parallel for reduction(+:invalid)
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             if (isnan(matrix[i][j]) || isinf(matrix[i][j])) {
                return true;
-//                invalid++;
             }
         }
     }
-
-//    return invalid < 1;
     return false;
 }
