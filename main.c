@@ -9,8 +9,6 @@
 #include <inttypes.h>
 #include <omp.h>
 
-#define MAX_TITLE_LENGTH 512
-
 #ifndef MAX_ITERATIONS
 #define MAX_ITERATIONS 512
 #endif
@@ -30,7 +28,6 @@
 #endif
 
 
-void matrix_print(int n, double matrix[n][n], const char *format, ...);
 void matrix_copy(int n, double source[n][n], double destination[n][n]);
 void matrix_multiply(int n, double A[n][n], double B[n][n], double C[n][n]);
 void matrix_inversion_iteration(int n, double A[n][n], double B[n][n], double next[n][n]);
@@ -65,7 +62,6 @@ int main(int argc, char* argv[])
     for (i = 0; i < MAX_ITERATIONS; i++) {
         matrix_inversion_iteration(n, A, B, next);
         if (matrix_has_invalid(n, next)) {
-            matrix_print(n,next, "NAN lub INF");
             invalid = true;
             break;
         }
