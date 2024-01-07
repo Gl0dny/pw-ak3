@@ -100,32 +100,6 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-void matrix_print(int n, double matrix[n][n], const char *format, ...)
-{
-    assert(format != NULL);
-    assert(matrix != NULL);
-    assert(n > 0);
-
-    char title[MAX_TITLE_LENGTH];
-    va_list args;
-
-    va_start(args, format);
-    vsnprintf(title, MAX_TITLE_LENGTH, format, args);
-    va_end(args);
-
-    printf("\n%s: [\n", title);
-
-    int rows = n;
-    int cols = n;
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            printf("%.2f\t", matrix[i][j]);
-        }
-        printf("\n");
-    }
-    printf("]\n");
-}
-
 void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
 {
     #pragma omp parallel for
@@ -138,7 +112,6 @@ void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
             }
         }
     }
-
     /*
     // wersja sekwencyjna
     for (int i = 0; i < n; i++) {
@@ -170,7 +143,6 @@ void matrix_copy(int n, double source[n][n], double destination[n][n])
             destination[i][j] = source[i][j];
         }
     }
-
     /*
     // wersja sekwencyjna
     for (int i = 0; i < n; i++) {
@@ -184,8 +156,8 @@ void matrix_copy(int n, double source[n][n], double destination[n][n])
 void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double next[n][n])
 {
     double r[n][n], temp[n][n];
-
     matrix_multiply(n, b, a, temp);
+
     #pragma omp parallel for
     for(int i = 0; i < n; i++) {
         for(int j = 0; j < n; j++) {
@@ -200,7 +172,6 @@ void matrix_inversion_iteration(int n, double a[n][n], double b[n][n], double ne
             next[i][j] = temp[i][j] + b[i][j];
         }
     }
-
     /*
     // wersja sekwencyjna
     matrix_multiply(n, b, a, temp);
