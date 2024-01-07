@@ -51,13 +51,7 @@ int main(int argc, char* argv[])
     bool found = false;
     bool invalid = false;
 
-//    omp_set_num_threads(16);
-
-#ifdef FLAT_PARALLEL
-    printf("Wersja openmp-flat, SIZE: %d\n", SIZE);
-#else
     printf("Wersja openmp, SIZE: %d\n", SIZE);
-#endif
 
     matrix_copy(n, A, B);
 
