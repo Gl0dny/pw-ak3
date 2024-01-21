@@ -95,19 +95,19 @@ int main(int argc, char *argv[])
 
     if (rank == 0)
     {
-        printf("Proces %d: Czas wykonania %.6f s\n", rank, total_elapsed);
+        printf("Czas wykonania %.6f s\n", rank, total_elapsed);
 
         if (!found || invalid)
         {
-            printf("Proces %d: Niepowodzenie.\n", rank);
-            invalid && printf("Proces %d: INF lub NAN\n", rank);
-            !found && printf("Proces %d: Nie znaleziono w %d iteracjach.\n", rank, i);
+            printf("Niepowodzenie.\n", rank);
+            invalid && printf("INF lub NAN\n", rank);
+            !found && printf("Nie znaleziono w %d iteracjach.\n", rank, i);
         }
         else
         {
             matrix_multiply(n, next, A, temp);
             matrix_subtract(n, temp, I, temp);
-            printf("Proces %d: OK. Odnaleziono w %d iteracjach. Błąd: %.10f\n", rank, i, matrix_norm(n, temp));
+            printf("OK. Odnaleziono w %d iteracjach. Błąd: %.10f\n", rank, i, matrix_norm(n, temp));
         }
     }
 
