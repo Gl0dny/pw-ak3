@@ -5,7 +5,6 @@
 #include <time.h>
 #include <math.h>
 #include <mpi.h>
-#include <omp.h>
 
 #ifndef MAX_ITERATIONS
 #define MAX_ITERATIONS 512
@@ -51,12 +50,17 @@ int main(int argc, char *argv[])
     bool found = false;
     bool invalid = false;
 
-    if (rank == 0) {
-        printf("Wersja MPI, SIZE: %d, Processes: %d\n", SIZE, size);
+    double total_elapsed = 0.0;
+    double total_cpu_time = 0.0;
+
+    if (rank == 0)
+    {
+        printf("Wersja MPI, SIZE: %d, Procesy: %d\n", SIZE, size);
     }
 
     matrix_copy(n, A, B);
 
+    MPI_Barrier(MPI_COMM_WORLD);
     gettimeofday(&start, NULL);
     clock_t cpu0 = clock();
 
@@ -80,33 +84,38 @@ int main(int argc, char *argv[])
         matrix_copy(n, next, B);
     }
 
-    MPI_Bcast(&found, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-
+    MPI_Barrier(MPI_COMM_WORLD);
     clock_t cpu1 = clock();
     gettimeofday(&end, NULL);
 
     double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
-    printf("Process %d: Czas wykonania %.6f s\n", rank, elapsed);
     double cpuTime = (double)(cpu1 - cpu0) / CLOCKS_PER_SEC;
-    printf("Process %d: Czas procesora %.6f s\n", rank, cpuTime);
 
-    if (!found || invalid)
+    MPI_Reduce(&elapsed, &total_elapsed, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+
+    if (rank == 0)
     {
-        printf("Process %d: Niepowodzenie.\n", rank);
-        invalid && printf("Process %d: INF lub NAN\n", rank);
-        !found && printf("Process %d: Nie znaleziono w %d iteracjach.\n", rank, i);
-    }
-    else
-    {
-        matrix_multiply(n, next, A, temp);
-        matrix_subtract(n, temp, I, temp);
-        printf("Process %d: OK. Odnaleziono w %d iteracjach. Błąd: %.10f\n", rank, i, matrix_norm(n, temp));
+        printf("Proces %d: Czas wykonania %.6f s\n", rank, total_elapsed);
+
+        if (!found || invalid)
+        {
+            printf("Proces %d: Niepowodzenie.\n", rank);
+            invalid && printf("Proces %d: INF lub NAN\n", rank);
+            !found && printf("Proces %d: Nie znaleziono w %d iteracjach.\n", rank, i);
+        }
+        else
+        {
+            matrix_multiply(n, next, A, temp);
+            matrix_subtract(n, temp, I, temp);
+            printf("Proces %d: OK. Odnaleziono w %d iteracjach. Błąd: %.10f\n", rank, i, matrix_norm(n, temp));
+        }
     }
 
     MPI_Finalize();
 
     return 0;
 }
+
 
 
 void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
