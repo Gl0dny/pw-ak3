@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <math.h>
+#include <mpi.h>
 #include <omp.h>
 
 #ifndef MAX_ITERATIONS
@@ -28,13 +29,17 @@ void matrix_copy(int n, double source[n][n], double destination[n][n]);
 void matrix_multiply(int n, double A[n][n], double B[n][n], double C[n][n]);
 void matrix_inversion_iteration(int n, double A[n][n], double B[n][n], double next[n][n]);
 void matrix_subtract(int n, double a[n][n], double b[n][n], double c[n][n]);
-
 double matrix_norm(int n, double matrix[n][n]);
+bool matrix_has_invalid(int n, double matrix[n][n]);
 
-bool matrix_has_invalid (int n, double matrix[n][n]);
-
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
+    MPI_Init(&argc, &argv);
+
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
     struct timeval start, end;
     int n = SIZE;
     double n_sqrt = sqrt(n);
@@ -46,7 +51,9 @@ int main(int argc, char* argv[])
     bool found = false;
     bool invalid = false;
 
-    printf("Wersja sekwencyjna, SIZE: %d\n", SIZE);
+    if (rank == 0) {
+        printf("Wersja MPI, SIZE: %d, Processes: %d\n", SIZE, size);
+    }
 
     matrix_copy(n, A, B);
 
@@ -55,42 +62,52 @@ int main(int argc, char* argv[])
 
     int i;
     double epsilon = 1e-6;
-    for (i = 0; i < MAX_ITERATIONS; i++) {
+    for (i = 0; i < MAX_ITERATIONS; i++)
+    {
         matrix_inversion_iteration(n, A, B, next);
-        if (matrix_has_invalid(n, next)) {
-            invalid = true;
+        MPI_Bcast(&invalid, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+        if (invalid)
+        {
             break;
         }
 
         matrix_multiply(n, next, A, temp);
-        if (fabs(matrix_norm(n, temp) - sqrt(n)) < epsilon) {
+        if (fabs(matrix_norm(n, temp) - sqrt(n)) < epsilon)
+        {
             found = true;
             break;
         }
         matrix_copy(n, next, B);
     }
 
+    MPI_Bcast(&found, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+
     clock_t cpu1 = clock();
     gettimeofday(&end, NULL);
 
     double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.0;
-    printf("Czas wykonania %.6f s\n", elapsed);
+    printf("Process %d: Czas wykonania %.6f s\n", rank, elapsed);
     double cpuTime = (double)(cpu1 - cpu0) / CLOCKS_PER_SEC;
-    printf("Czas procesora %.6f s\n", cpuTime);
+    printf("Process %d: Czas procesora %.6f s\n", rank, cpuTime);
 
-    if (!found || invalid) {
-        printf("Niepowodzenie.\n");
-        invalid && printf("INF lub NAN\n");
-        !found && printf("Nie znaleziono w %d iteracjach.\n", i);
-
-    } else {
+    if (!found || invalid)
+    {
+        printf("Process %d: Niepowodzenie.\n", rank);
+        invalid && printf("Process %d: INF lub NAN\n", rank);
+        !found && printf("Process %d: Nie znaleziono w %d iteracjach.\n", rank, i);
+    }
+    else
+    {
         matrix_multiply(n, next, A, temp);
         matrix_subtract(n, temp, I, temp);
-        printf("OK. Odnaleziono w %d iteracjach. Błąd: %.10f\n", i, matrix_norm(n, temp));
+        printf("Process %d: OK. Odnaleziono w %d iteracjach. Błąd: %.10f\n", rank, i, matrix_norm(n, temp));
     }
+
+    MPI_Finalize();
 
     return 0;
 }
+
 
 void matrix_multiply(int n, double a[n][n], double b[n][n], double c[n][n])
 {
