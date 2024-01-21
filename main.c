@@ -5,6 +5,7 @@
 #include <time.h>
 #include <math.h>
 #include <mpi.h>
+#include <omp.h>
 
 #ifndef MAX_ITERATIONS
 #define MAX_ITERATIONS 512
