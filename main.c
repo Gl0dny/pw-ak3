@@ -8,7 +8,7 @@
 #include <omp.h>
 
 #ifndef MAX_ITERATIONS
-#define MAX_ITERATIONS 512
+#define MAX_ITERATIONS 100000
 #endif
 
 #if SIZE == 5
@@ -23,6 +23,8 @@
 #include "vars_67.h"
 #elif SIZE == 100
 #include "vars_100.h"
+#elif SIZE == 200
+#include "vars_200.h"
 #endif
 
 void matrix_copy(int n, double source[n][n], double destination[n][n]);
@@ -43,7 +45,7 @@ int main(int argc, char *argv[])
     struct timeval start, end;
     int n = SIZE;
     double n_sqrt = sqrt(n);
-    assert(n == 5 || n == 13 || n == 33 || n == 50 || n == 67 || n == 100);
+    assert(n == 5 || n == 13 || n == 33 || n == 50 || n == 67 || n == 100 || n == 200);
 
     double next[n][n];
     double temp[n][n];
@@ -56,12 +58,11 @@ int main(int argc, char *argv[])
 
     if (rank == 0)
     {
-        printf("Wersja MPI, SIZE: %d, Procesy: %d\n", SIZE, size);
+        printf("MPI Version, SIZE: %d, Processes: %d\n", SIZE, size);
     }
 
     matrix_copy(n, A, B);
 
-    MPI_Barrier(MPI_COMM_WORLD);
     gettimeofday(&start, NULL);
     clock_t cpu0 = clock();
 
@@ -85,7 +86,6 @@ int main(int argc, char *argv[])
         matrix_copy(n, next, B);
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
     clock_t cpu1 = clock();
     gettimeofday(&end, NULL);
 
@@ -93,22 +93,24 @@ int main(int argc, char *argv[])
     double cpuTime = (double)(cpu1 - cpu0) / CLOCKS_PER_SEC;
 
     MPI_Reduce(&elapsed, &total_elapsed, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&cpuTime, &total_cpu_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
     if (rank == 0)
     {
-        printf("Czas wykonania %.6f s\n", total_elapsed);
+        printf("Total Elapsed Time: %.6f s\n", total_elapsed);
+        printf("Total CPU Time across all processes: %.6f s\n", total_cpu_time);
 
         if (!found || invalid)
         {
-            printf("Niepowodzenie.\n");
-            invalid && printf("INF lub NAN\n");
-            !found && printf("Nie znaleziono w %d iteracjach.\n", i);
+            printf("Failure.\n");
+            invalid && printf("INF or NAN\n");
+            !found && printf("Not found in %d iterations.\n", i);
         }
         else
         {
             matrix_multiply(n, next, A, temp);
             matrix_subtract(n, temp, I, temp);
-            printf("OK. Odnaleziono w %d iteracjach. Błąd: %.10f\n", i, matrix_norm(n, temp));
+            printf("OK. Found in %d iterations. Error: %.10f\n", i, matrix_norm(n, temp));
         }
     }
 
