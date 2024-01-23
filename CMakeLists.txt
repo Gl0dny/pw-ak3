@@ -37,3 +37,18 @@ add_executable(ak3-100 main.c)
 target_link_libraries(ak3-100 ${MATH_LIB})
 target_compile_definitions(ak3-100 PRIVATE SIZE=100)
 target_link_libraries(ak3-100 MPI::MPI_C)  
+
+add_executable(ak3-167 main.c)
+target_link_libraries(ak3-167 ${MATH_LIB})
+target_compile_definitions(ak3-167 PRIVATE SIZE=167)
+target_link_libraries(ak3-167 MPI::MPI_C)  
+
+add_executable(ak3-333 main.c)
+target_link_libraries(ak3-333 ${MATH_LIB})
+target_compile_definitions(ak3-333 PRIVATE SIZE=333)
+target_link_libraries(ak3-333 MPI::MPI_C)  
+
+add_executable(ak3-500 main.c)
+target_link_libraries(ak3-500 ${MATH_LIB})
+target_compile_definitions(ak3-500 PRIVATE SIZE=500)
+target_link_libraries(ak3-500 MPI::MPI_C)  

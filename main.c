@@ -8,7 +8,7 @@
 #include <omp.h>
 
 #ifndef MAX_ITERATIONS
-#define MAX_ITERATIONS 100000
+#define MAX_ITERATIONS 10000
 #endif
 
 #if SIZE == 5
@@ -23,8 +23,12 @@
 #include "vars_67.h"
 #elif SIZE == 100
 #include "vars_100.h"
-#elif SIZE == 200
-#include "vars_200.h"
+#elif SIZE == 167
+#include "vars_167.h"
+#elif SIZE == 333
+#include "vars_333.h"
+#elif SIZE == 500
+#include "vars_500.h"
 #endif
 
 void matrix_copy(int n, double source[n][n], double destination[n][n]);
@@ -45,7 +49,7 @@ int main(int argc, char *argv[])
     struct timeval start, end;
     int n = SIZE;
     double n_sqrt = sqrt(n);
-    assert(n == 5 || n == 13 || n == 33 || n == 50 || n == 67 || n == 100 || n == 200);
+    assert(n == 5 || n == 13 || n == 33 || n == 50 || n == 67 || n == 100 || n == 167 || n == 333 || n == 500);
 
     double next[n][n];
     double temp[n][n];
@@ -71,7 +75,10 @@ int main(int argc, char *argv[])
     for (i = 0; i < MAX_ITERATIONS; i++)
     {
         matrix_inversion_iteration(n, A, B, next);
-        MPI_Bcast(&invalid, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+        int send_invalid = invalid;
+        MPI_Allreduce(&send_invalid, &invalid, 1, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
+
+
         if (invalid)
         {
             break;
